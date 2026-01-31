@@ -21,6 +21,37 @@ class DataService {
   int get occupiedBeds =>
       _floors.fold(0, (sum, floor) => sum + floor.occupiedBeds);
 
+  // Payment status getters
+  int get totalGuests {
+    int count = 0;
+    for (var floor in _floors) {
+      for (var room in floor.rooms) {
+        count += room.guests.length;
+      }
+    }
+    return count;
+  }
+
+  int get paidGuests {
+    int count = 0;
+    for (var floor in _floors) {
+      for (var room in floor.rooms) {
+        count += room.guests.where((guest) => guest.isPaid).length;
+      }
+    }
+    return count;
+  }
+
+  int get unpaidGuests {
+    int count = 0;
+    for (var floor in _floors) {
+      for (var room in floor.rooms) {
+        count += room.guests.where((guest) => !guest.isPaid).length;
+      }
+    }
+    return count;
+  }
+
   void initializeMockData() {
     _floors.clear();
 
@@ -46,6 +77,8 @@ class DataService {
                 roomId: 'r101',
                 aadharNumber: '1234 5678 9012',
                 rentAmount: 5000,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 25),
               ),
               Guest(
                 id: 'g2',
@@ -57,6 +90,7 @@ class DataService {
                 roomId: 'r101',
                 aadharNumber: '1234 5678 9013',
                 rentAmount: 5000,
+                isPaid: false,
               ),
             ],
           ),
@@ -76,6 +110,8 @@ class DataService {
                 roomId: 'r102',
                 aadharNumber: '1234 5678 9014',
                 rentAmount: 5500,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 28),
               ),
             ],
           ),
@@ -95,6 +131,7 @@ class DataService {
                 roomId: 'r103',
                 aadharNumber: '1234 5678 9015',
                 rentAmount: 4800,
+                isPaid: false,
               ),
               Guest(
                 id: 'g5',
@@ -106,6 +143,8 @@ class DataService {
                 roomId: 'r103',
                 aadharNumber: '1234 5678 9016',
                 rentAmount: 4800,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 30),
               ),
             ],
           ),
@@ -142,6 +181,8 @@ class DataService {
                 roomId: 'r201',
                 aadharNumber: '1234 5678 9017',
                 rentAmount: 5200,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 20),
               ),
               Guest(
                 id: 'g7',
@@ -153,6 +194,7 @@ class DataService {
                 roomId: 'r201',
                 aadharNumber: '1234 5678 9018',
                 rentAmount: 5200,
+                isPaid: false,
               ),
               Guest(
                 id: 'g8',
@@ -164,6 +206,8 @@ class DataService {
                 roomId: 'r201',
                 aadharNumber: '1234 5678 9019',
                 rentAmount: 5200,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 27),
               ),
             ],
           ),
@@ -183,6 +227,8 @@ class DataService {
                 roomId: 'r202',
                 aadharNumber: '1234 5678 9020',
                 rentAmount: 5500,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 22),
               ),
               Guest(
                 id: 'g10',
@@ -194,6 +240,7 @@ class DataService {
                 roomId: 'r202',
                 aadharNumber: '1234 5678 9021',
                 rentAmount: 5500,
+                isPaid: false,
               ),
             ],
           ),
@@ -213,6 +260,7 @@ class DataService {
                 roomId: 'r203',
                 aadharNumber: '1234 5678 9022',
                 rentAmount: 4900,
+                isPaid: false,
               ),
             ],
           ),
@@ -249,6 +297,8 @@ class DataService {
                 roomId: 'r301',
                 aadharNumber: '1234 5678 9023',
                 rentAmount: 5300,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 15),
               ),
               Guest(
                 id: 'g13',
@@ -260,6 +310,8 @@ class DataService {
                 roomId: 'r301',
                 aadharNumber: '1234 5678 9024',
                 rentAmount: 5300,
+                isPaid: true,
+                paidDate: DateTime(2026, 1, 18),
               ),
             ],
           ),
@@ -279,6 +331,7 @@ class DataService {
                 roomId: 'r302',
                 aadharNumber: '1234 5678 9025',
                 rentAmount: 5100,
+                isPaid: false,
               ),
             ],
           ),

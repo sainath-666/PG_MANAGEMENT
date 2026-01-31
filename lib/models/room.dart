@@ -18,6 +18,7 @@ class Room {
   int get occupiedBeds => guests.length;
   int get availableBeds => totalBeds - occupiedBeds;
   bool get hasAvailability => availableBeds > 0;
+  int get paidGuests => guests.where((guest) => guest.isPaid).length;
 
   Map<String, dynamic> toJson() {
     return {

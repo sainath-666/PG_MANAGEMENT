@@ -29,6 +29,8 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
   Floor? _selectedFloor;
   Room? _selectedRoom;
   DateTime _joinDate = DateTime.now();
+  bool _isPaid = false;
+  DateTime? _paidDate;
 
   List<Room> _availableRooms = [];
 
@@ -105,6 +107,33 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
     }
   }
 
+  Future<void> _selectPaidDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _paidDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.teal.shade600,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _paidDate = picked;
+      });
+    }
+  }
+
   void _handleSubmit() {
     if (_formKey.currentState!.validate()) {
       if (_selectedGender == null) {
@@ -148,6 +177,8 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
         roomId: _selectedRoom!.id,
         aadharNumber: _aadharController.text,
         rentAmount: double.parse(_rentController.text),
+        isPaid: _isPaid,
+        paidDate: _isPaid ? _paidDate : null,
       );
 
       // Add guest to data service
@@ -172,6 +203,8 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
         _selectedFloor = null;
         _selectedRoom = null;
         _availableRooms = [];
+        _isPaid = false;
+        _paidDate = null;
       });
     }
   }
@@ -383,6 +416,19 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 24),
+
+                    // Payment Status Section
+                    _buildSectionHeader(
+                      'Payment Status',
+                      Icons.payment_rounded,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPaymentStatusToggle(),
+                    if (_isPaid) ...[
+                      const SizedBox(height: 16),
+                      _buildPaidDateCard(),
+                    ],
                     const SizedBox(height: 32),
 
                     // Action Buttons
@@ -400,6 +446,8 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                                 _selectedFloor = null;
                                 _selectedRoom = null;
                                 _availableRooms = [];
+                                _isPaid = false;
+                                _paidDate = null;
                               });
                             },
                             style: OutlinedButton.styleFrom(
@@ -754,6 +802,164 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPaymentStatusToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            setState(() {
+              _isPaid = !_isPaid;
+              if (!_isPaid) {
+                _paidDate = null;
+              } else if (_paidDate == null) {
+                _paidDate = DateTime.now();
+              }
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _isPaid ? Colors.green.shade50 : Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _isPaid ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                    color: _isPaid
+                        ? Colors.green.shade600
+                        : Colors.red.shade600,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Payment Status',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _isPaid ? 'Payed' : 'Unpayed',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _isPaid
+                              ? Colors.green.shade700
+                              : Colors.red.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _isPaid,
+                  onChanged: (value) {
+                    setState(() {
+                      _isPaid = value;
+                      if (!_isPaid) {
+                        _paidDate = null;
+                      } else if (_paidDate == null) {
+                        _paidDate = DateTime.now();
+                      }
+                    });
+                  },
+                  activeColor: Colors.green.shade600,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaidDateCard() {
+    return GestureDetector(
+      onTap: () => _selectPaidDate(context),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.green.shade50, Colors.green.shade100],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.green.shade200, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.green.shade600,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.event_available_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Payment Date',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _paidDate != null
+                        ? '${_paidDate!.day}/${_paidDate!.month}/${_paidDate!.year}'
+                        : 'Select payment date',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green.shade900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.edit_calendar_rounded,
+              color: Colors.green.shade600,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

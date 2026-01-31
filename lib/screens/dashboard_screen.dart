@@ -376,11 +376,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: Colors.green,
         ),
         _buildStatTile(
-          title: "Full Occupancy", // Inverse of available for visual variety
-          value:
-              "${((_dataService.occupiedBeds / _dataService.totalBeds) * 100).toStringAsFixed(0)}%",
-          icon: Icons.pie_chart_outline_rounded,
-          color: Colors.pinkAccent,
+          title: "Rent Paid",
+          value: _dataService.paidGuests.toString(),
+          icon: Icons.payment_rounded,
+          color: Colors.blueAccent,
         ),
       ],
     );

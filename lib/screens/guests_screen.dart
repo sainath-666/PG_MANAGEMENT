@@ -386,6 +386,11 @@ class GuestsScreen extends StatelessWidget {
                     value: '₹${guest.rentAmount.toStringAsFixed(0)}',
                     color: const Color(0xFF4CAF50),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Divider(height: 1, color: Colors.grey.shade200),
+                  ),
+                  _buildPaymentStatusRow(guest),
                 ],
               ),
             ),
@@ -432,6 +437,72 @@ class GuestsScreen extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF2C3E50),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentStatusRow(Guest guest) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    final isPaid = guest.isPaid;
+
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isPaid
+                ? Colors.green.withOpacity(0.1)
+                : Colors.red.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            isPaid ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            size: 18,
+            color: isPaid ? Colors.green : Colors.red,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Payment Status',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Text(
+                    isPaid ? 'Payed' : 'Unpayed',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isPaid
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                    ),
+                  ),
+                  if (isPaid && guest.paidDate != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '• ${dateFormat.format(guest.paidDate!)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

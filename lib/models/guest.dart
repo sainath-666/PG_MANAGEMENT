@@ -8,6 +8,8 @@ class Guest {
   final String roomId;
   final String aadharNumber;
   final double rentAmount;
+  final bool isPaid;
+  final DateTime? paidDate;
 
   Guest({
     required this.id,
@@ -19,6 +21,8 @@ class Guest {
     required this.roomId,
     required this.aadharNumber,
     required this.rentAmount,
+    this.isPaid = false,
+    this.paidDate,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +36,8 @@ class Guest {
       'roomId': roomId,
       'aadharNumber': aadharNumber,
       'rentAmount': rentAmount,
+      'isPaid': isPaid,
+      'paidDate': paidDate?.toIso8601String(),
     };
   }
 
@@ -46,6 +52,10 @@ class Guest {
       roomId: json['roomId'],
       aadharNumber: json['aadharNumber'],
       rentAmount: json['rentAmount'],
+      isPaid: json['isPaid'] ?? false,
+      paidDate: json['paidDate'] != null
+          ? DateTime.parse(json['paidDate'])
+          : null,
     );
   }
 }

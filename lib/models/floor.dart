@@ -13,6 +13,7 @@ class Floor {
   int get availableBeds =>
       rooms.fold(0, (sum, room) => sum + room.availableBeds);
   int get occupiedBeds => rooms.fold(0, (sum, room) => sum + room.occupiedBeds);
+  int get paidGuests => rooms.fold(0, (sum, room) => sum + room.paidGuests);
 
   Map<String, dynamic> toJson() {
     return {
