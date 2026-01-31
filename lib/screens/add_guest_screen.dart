@@ -28,7 +28,7 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
   String? _selectedGender;
   Floor? _selectedFloor;
   Room? _selectedRoom;
-  final DateTime _joinDate = DateTime.now();
+  DateTime _joinDate = DateTime.now();
 
   List<Room> _availableRooms = [];
 
@@ -76,6 +76,33 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
           ? _dataService.getAvailableRoomsByFloor(floor.id)
           : [];
     });
+  }
+
+  Future<void> _selectJoinDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _joinDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.teal.shade600,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _joinDate) {
+      setState(() {
+        _joinDate = picked;
+      });
+    }
   }
 
   void _handleSubmit() {
@@ -135,335 +162,598 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
         ),
       );
 
-      // Navigate back
-      Navigator.pop(context);
+      // Clear form
+      _nameController.clear();
+      _mobileController.clear();
+      _aadharController.clear();
+      _rentController.clear();
+      setState(() {
+        _selectedGender = null;
+        _selectedFloor = null;
+        _selectedRoom = null;
+        _availableRooms = [];
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Add New Guest',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Card
-              Card(
-                color: Colors.blue.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.blue.shade700),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Fill in the details to register a new guest',
-                          style: TextStyle(fontSize: 14, color: Colors.black87),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    return Container(
+      color: const Color(0xFFF5F7FA),
+      child: Column(
+        children: [
+          // Modern Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.teal.shade600, Colors.teal.shade800],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 24),
-
-              // Name Field
-              const Text(
-                'Name *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  hintText: 'Enter full name',
-                  prefixIcon: const Icon(Icons.person),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Gender Field
-              const Text(
-                'Gender *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedGender,
-                decoration: InputDecoration(
-                  hintText: 'Select gender',
-                  prefixIcon: const Icon(Icons.wc),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'Male', child: Text('Male')),
-                  DropdownMenuItem(value: 'Female', child: Text('Female')),
-                  DropdownMenuItem(value: 'Other', child: Text('Other')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Mobile Number Field
-              const Text(
-                'Mobile Number *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _mobileController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                decoration: InputDecoration(
-                  hintText: 'Enter 10-digit mobile number',
-                  prefixIcon: const Icon(Icons.phone),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter mobile number';
-                  }
-                  if (value.length != 10) {
-                    return 'Mobile number must be 10 digits';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Join Date Display (Auto-selected as today)
-              const Text(
-                'Join Date',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    const Icon(Icons.calendar_today, color: Colors.grey),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${_joinDate.day}/${_joinDate.month}/${_joinDate.year} (Today)',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.person_add_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Add New Guest',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Register guest information',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Floor Selection
-              const Text(
-                'Floor *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<Floor>(
-                value: _selectedFloor,
-                decoration: InputDecoration(
-                  hintText: 'Select floor',
-                  prefixIcon: const Icon(Icons.layers),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: _dataService.floors.map((floor) {
-                  return DropdownMenuItem(
-                    value: floor,
-                    child: Text('Floor ${floor.floorNumber}'),
-                  );
-                }).toList(),
-                onChanged: _onFloorChanged,
-              ),
-              const SizedBox(height: 20),
-
-              // Room Selection
-              const Text(
-                'Room *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<Room>(
-                value: _selectedRoom,
-                decoration: InputDecoration(
-                  hintText: _selectedFloor == null
-                      ? 'Select floor first'
-                      : _availableRooms.isEmpty
-                      ? 'No available rooms'
-                      : 'Select room',
-                  prefixIcon: const Icon(Icons.meeting_room),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: _availableRooms.map((room) {
-                  return DropdownMenuItem(
-                    value: room,
-                    child: Text(
-                      'Room ${room.roomNumber} (${room.availableBeds} bed${room.availableBeds != 1 ? 's' : ''} available)',
+              ],
+            ),
+          ),
+          // Scrollable Form Content
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Personal Information Section
+                    _buildSectionHeader(
+                      'Personal Information',
+                      Icons.person_rounded,
                     ),
-                  );
-                }).toList(),
-                onChanged: _selectedFloor == null
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _selectedRoom = value;
-                        });
+                    const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _nameController,
+                      label: 'Full Name',
+                      hint: 'Enter guest full name',
+                      icon: Icons.person_outline_rounded,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter name';
+                        }
+                        return null;
                       },
-              ),
-              const SizedBox(height: 20),
-
-              // Aadhar Number Field
-              const Text(
-                'Aadhar Number *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _aadharController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(12),
-                ],
-                decoration: InputDecoration(
-                  hintText: 'Enter 12-digit Aadhar number',
-                  prefixIcon: const Icon(Icons.credit_card),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter Aadhar number';
-                  }
-                  if (value.length != 12) {
-                    return 'Aadhar number must be 12 digits';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Rent Amount Field
-              const Text(
-                'Rent Amount *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _rentController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  hintText: 'Enter monthly rent',
-                  prefixIcon: const Icon(Icons.currency_rupee),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter rent amount';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
-
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGenderSelector(),
+                    const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _mobileController,
+                      label: 'Mobile Number',
+                      hint: 'Enter 10-digit number',
+                      icon: Icons.phone_rounded,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter mobile number';
+                        }
+                        if (value.length != 10) {
+                          return 'Mobile number must be 10 digits';
+                        }
+                        return null;
                       },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.grey.shade400),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Submit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    const SizedBox(height: 24),
+
+                    // Room Assignment Section
+                    _buildSectionHeader(
+                      'Room Assignment',
+                      Icons.meeting_room_rounded,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    _buildJoinDateCard(),
+                    const SizedBox(height: 16),
+                    _buildModernDropdown<Floor>(
+                      value: _selectedFloor,
+                      label: 'Select Floor',
+                      hint: 'Choose floor',
+                      icon: Icons.layers_rounded,
+                      items: _dataService.floors,
+                      itemBuilder: (floor) => 'Floor ${floor.floorNumber}',
+                      onChanged: _onFloorChanged,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildModernDropdown<Room>(
+                      value: _selectedRoom,
+                      label: 'Select Room',
+                      hint: _selectedFloor == null
+                          ? 'Select floor first'
+                          : _availableRooms.isEmpty
+                          ? 'No available rooms'
+                          : 'Choose room',
+                      icon: Icons.meeting_room_outlined,
+                      items: _availableRooms,
+                      itemBuilder: (room) =>
+                          'Room ${room.roomNumber} (${room.availableBeds} bed${room.availableBeds != 1 ? 's' : ''} available)',
+                      onChanged: _selectedFloor == null
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _selectedRoom = value;
+                              });
+                            },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Additional Information Section
+                    _buildSectionHeader(
+                      'Additional Information',
+                      Icons.description_rounded,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _aadharController,
+                      label: 'Aadhar Number',
+                      hint: 'Enter 12-digit Aadhar',
+                      icon: Icons.credit_card_rounded,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(12),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter Aadhar number';
+                        }
+                        if (value.length != 12) {
+                          return 'Aadhar number must be 12 digits';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _rentController,
+                      label: 'Monthly Rent',
+                      hint: 'Enter rent amount',
+                      icon: Icons.currency_rupee_rounded,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter rent amount';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              _nameController.clear();
+                              _mobileController.clear();
+                              _aadharController.clear();
+                              _rentController.clear();
+                              setState(() {
+                                _selectedGender = null;
+                                _selectedFloor = null;
+                                _selectedRoom = null;
+                                _availableRooms = [];
+                              });
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(
+                                color: Colors.grey.shade400,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: _handleSubmit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade600,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_rounded, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Add Guest',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.teal.shade50,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: Colors.teal.shade700, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade800,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade200,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              prefixIcon: Icon(icon, color: Colors.teal.shade600),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            validator: validator,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Gender',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _buildGenderOption('Male', Icons.male_rounded)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildGenderOption('Female', Icons.female_rounded)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildGenderOption('Other', Icons.transgender_rounded),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderOption(String gender, IconData icon) {
+    final isSelected = _selectedGender == gender;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedGender = gender;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.teal.shade600 : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? Colors.teal.shade600 : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.teal.shade200,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+              size: 28,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              gender,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildJoinDateCard() {
+    final isToday =
+        _joinDate.year == DateTime.now().year &&
+        _joinDate.month == DateTime.now().month &&
+        _joinDate.day == DateTime.now().day;
+
+    return GestureDetector(
+      onTap: () => _selectJoinDate(context),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal.shade50, Colors.teal.shade100],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.teal.shade200, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.teal.shade600,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.calendar_today_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Join Date',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.teal.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${_joinDate.day}/${_joinDate.month}/${_joinDate.year}${isToday ? ' (Today)' : ''}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal.shade900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.edit_calendar_rounded,
+              color: Colors.teal.shade600,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernDropdown<T>({
+    required T? value,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required List<T> items,
+    required String Function(T) itemBuilder,
+    required void Function(T?)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade200,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField<T>(
+            value: value,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              prefixIcon: Icon(icon, color: Colors.teal.shade600),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(
+                  itemBuilder(item),
+                  style: const TextStyle(fontSize: 15),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+          ),
+        ),
+      ],
     );
   }
 }
