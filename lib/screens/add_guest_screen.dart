@@ -7,8 +7,9 @@ import '../models/room.dart';
 
 class AddGuestScreen extends StatefulWidget {
   final Room? initialRoom;
+  final Guest? guestToEdit;
 
-  const AddGuestScreen({super.key, this.initialRoom});
+  const AddGuestScreen({super.key, this.initialRoom, this.guestToEdit});
 
   @override
   State<AddGuestScreen> createState() => _AddGuestScreenState();
@@ -33,12 +34,43 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
   DateTime? _paidDate;
 
   List<Room> _availableRooms = [];
+  bool get _isEditMode => widget.guestToEdit != null;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialRoom != null) {
+    if (_isEditMode) {
+      _prefillEditData();
+    } else if (widget.initialRoom != null) {
       _prefillData();
+    }
+  }
+
+  void _prefillEditData() {
+    final guest = widget.guestToEdit!;
+    _nameController.text = guest.name;
+    _mobileController.text = guest.mobileNumber;
+    _aadharController.text = guest.aadharNumber;
+    _rentController.text = guest.rentAmount.toString();
+    _selectedGender = guest.gender;
+    _joinDate = guest.joinDate;
+    _isPaid = guest.isPaid;
+    _paidDate = guest.paidDate;
+
+    final floor = _dataService.getFloorById(guest.floorId);
+    if (floor != null) {
+      _selectedFloor = floor;
+      _availableRooms = _dataService.getAvailableRoomsByFloor(floor.id);
+
+      // Find the current room even if it's full
+      final currentRoom = _dataService.getRoomById(guest.roomId);
+      if (currentRoom != null && !_availableRooms.contains(currentRoom)) {
+        _availableRooms.add(currentRoom);
+      }
+      _selectedRoom = _availableRooms.firstWhere(
+        (r) => r.id == guest.roomId,
+        orElse: () => _availableRooms.first,
+      );
     }
   }
 
@@ -166,54 +198,86 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
         return;
       }
 
-      // Create new guest
-      final newGuest = Guest(
-        id: 'g${DateTime.now().millisecondsSinceEpoch}',
-        name: _nameController.text,
-        gender: _selectedGender!,
-        mobileNumber: _mobileController.text,
-        joinDate: _joinDate,
-        floorId: _selectedFloor!.id,
-        roomId: _selectedRoom!.id,
-        aadharNumber: _aadharController.text,
-        rentAmount: double.parse(_rentController.text),
-        isPaid: _isPaid,
-        paidDate: _isPaid ? _paidDate : null,
-      );
+      if (_isEditMode) {
+        // Update existing guest
+        final updatedGuest = Guest(
+          id: widget.guestToEdit!.id,
+          name: _nameController.text,
+          gender: _selectedGender!,
+          mobileNumber: _mobileController.text,
+          joinDate: _joinDate,
+          floorId: _selectedFloor!.id,
+          roomId: _selectedRoom!.id,
+          aadharNumber: _aadharController.text,
+          rentAmount: double.parse(_rentController.text),
+          isPaid: _isPaid,
+          paidDate: _isPaid ? _paidDate : null,
+        );
 
-      // Add guest to data service
-      _dataService.addGuest(newGuest);
+        // Update guest in data service
+        _dataService.updateGuest(updatedGuest);
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Guest ${newGuest.name} added successfully!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${updatedGuest.name} updated successfully!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
 
-      // Clear form
-      _nameController.clear();
-      _mobileController.clear();
-      _aadharController.clear();
-      _rentController.clear();
-      setState(() {
-        _selectedGender = null;
-        _selectedFloor = null;
-        _selectedRoom = null;
-        _availableRooms = [];
-        _isPaid = false;
-        _paidDate = null;
-      });
+        // Go back
+        Navigator.pop(context);
+      } else {
+        // Create new guest
+        final newGuest = Guest(
+          id: 'g${DateTime.now().millisecondsSinceEpoch}',
+          name: _nameController.text,
+          gender: _selectedGender!,
+          mobileNumber: _mobileController.text,
+          joinDate: _joinDate,
+          floorId: _selectedFloor!.id,
+          roomId: _selectedRoom!.id,
+          aadharNumber: _aadharController.text,
+          rentAmount: double.parse(_rentController.text),
+          isPaid: _isPaid,
+          paidDate: _isPaid ? _paidDate : null,
+        );
+
+        // Add guest to data service
+        _dataService.addGuest(newGuest);
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Guest ${newGuest.name} added successfully!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Clear form
+        _nameController.clear();
+        _mobileController.clear();
+        _aadharController.clear();
+        _rentController.clear();
+        setState(() {
+          _selectedGender = null;
+          _selectedFloor = null;
+          _selectedRoom = null;
+          _availableRooms = [];
+          _isPaid = false;
+          _paidDate = null;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF5F7FA),
-      child: Column(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: Column(
         children: [
           // Modern Header
           Container(
@@ -246,29 +310,33 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.person_add_rounded,
+                      child: Icon(
+                        _isEditMode
+                            ? Icons.edit_rounded
+                            : Icons.person_add_rounded,
                         color: Colors.white,
                         size: 28,
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Add New Guest',
-                            style: TextStyle(
+                            _isEditMode ? 'Edit Guest' : 'Add New Guest',
+                            style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                               letterSpacing: 0.5,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Register guest information',
+                            _isEditMode
+                                ? 'Update guest information'
+                                : 'Register guest information',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.white70,
@@ -483,14 +551,19 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.check_circle_rounded, size: 20),
-                                SizedBox(width: 8),
+                                Icon(
+                                  _isEditMode
+                                      ? Icons.save_rounded
+                                      : Icons.check_circle_rounded,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Add Guest',
-                                  style: TextStyle(
+                                  _isEditMode ? 'Update Guest' : 'Add Guest',
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),

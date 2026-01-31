@@ -365,6 +365,31 @@ class DataService {
     }
   }
 
+  void deleteGuest(String guestId, String roomId) {
+    for (var floor in _floors) {
+      for (var room in floor.rooms) {
+        if (room.id == roomId) {
+          room.guests.removeWhere((guest) => guest.id == guestId);
+          return;
+        }
+      }
+    }
+  }
+
+  void updateGuest(Guest updatedGuest) {
+    for (var floor in _floors) {
+      for (var room in floor.rooms) {
+        if (room.id == updatedGuest.roomId) {
+          final index = room.guests.indexWhere((g) => g.id == updatedGuest.id);
+          if (index != -1) {
+            room.guests[index] = updatedGuest;
+          }
+          return;
+        }
+      }
+    }
+  }
+
   Floor? getFloorById(String floorId) {
     try {
       return _floors.firstWhere((floor) => floor.id == floorId);

@@ -2,12 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/room.dart';
 import '../models/guest.dart';
+import '../services/data_service.dart';
 import 'add_guest_screen.dart';
 
-class GuestsScreen extends StatelessWidget {
+class GuestsScreen extends StatefulWidget {
   final Room room;
 
   const GuestsScreen({super.key, required this.room});
+
+  @override
+  State<GuestsScreen> createState() => _GuestsScreenState();
+}
+
+class _GuestsScreenState extends State<GuestsScreen> {
+  final DataService _dataService = DataService();
+
+  void _deleteGuest(Guest guest) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Guest'),
+        content: Text(
+          'Are you sure you want to remove ${guest.name} from this room?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              _dataService.deleteGuest(guest.id, widget.room.id);
+              Navigator.pop(context);
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${guest.name} removed successfully'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _editGuest(Guest guest) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            AddGuestScreen(initialRoom: widget.room, guestToEdit: guest),
+      ),
+    ).then((_) => setState(() {}));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +106,7 @@ class GuestsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Room ${room.roomNumber}',
+                            'Room ${widget.room.roomNumber}',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -66,7 +116,7 @@ class GuestsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${room.guests.length} Guest${room.guests.length != 1 ? 's' : ''}',
+                            '${widget.room.guests.length} Guest${widget.room.guests.length != 1 ? 's' : ''}',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.white.withOpacity(0.8),
@@ -84,7 +134,7 @@ class GuestsScreen extends StatelessWidget {
                     Expanded(
                       child: _buildHeaderStatBox(
                         'Total Beds',
-                        room.totalBeds.toString(),
+                        widget.room.totalBeds.toString(),
                         Icons.bed_rounded,
                       ),
                     ),
@@ -92,7 +142,7 @@ class GuestsScreen extends StatelessWidget {
                     Expanded(
                       child: _buildHeaderStatBox(
                         'Occupied',
-                        room.occupiedBeds.toString(),
+                        widget.room.occupiedBeds.toString(),
                         Icons.person_rounded,
                       ),
                     ),
@@ -100,7 +150,7 @@ class GuestsScreen extends StatelessWidget {
                     Expanded(
                       child: _buildHeaderStatBox(
                         'Available',
-                        room.availableBeds.toString(),
+                        widget.room.availableBeds.toString(),
                         Icons.check_circle_outline_rounded,
                       ),
                     ),
@@ -111,28 +161,32 @@ class GuestsScreen extends StatelessWidget {
           ),
           // Scrollable Guests List
           Expanded(
-            child: room.guests.isEmpty
+            child: widget.room.guests.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                    itemCount: room.guests.length,
+                    itemCount: widget.room.guests.length,
                     itemBuilder: (context, index) {
-                      return _buildModernGuestCard(room.guests[index], index);
+                      return _buildModernGuestCard(
+                        widget.room.guests[index],
+                        index,
+                      );
                     },
                   ),
           ),
         ],
       ),
-      floatingActionButton: room.availableBeds > 0
+      floatingActionButton: widget.room.availableBeds > 0
           ? FloatingActionButton.extended(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AddGuestScreen(initialRoom: room),
+                    builder: (context) =>
+                        AddGuestScreen(initialRoom: widget.room),
                   ),
-                );
+                ).then((_) => setState(() {}));
               },
               label: const Text('Add Guest'),
               icon: const Icon(Icons.add),
@@ -205,7 +259,7 @@ class GuestsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${room.availableBeds} bed${room.availableBeds != 1 ? 's' : ''} available',
+            '${widget.room.availableBeds} bed${widget.room.availableBeds != 1 ? 's' : ''} available',
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 24),
@@ -336,6 +390,30 @@ class GuestsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                // Action buttons
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => _editGuest(guest),
+                      icon: const Icon(Icons.edit_rounded),
+                      color: Colors.blue.shade700,
+                      tooltip: 'Edit Guest',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.blue.shade50,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _deleteGuest(guest),
+                      icon: const Icon(Icons.delete_rounded),
+                      color: Colors.red.shade700,
+                      tooltip: 'Delete Guest',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.red.shade50,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
