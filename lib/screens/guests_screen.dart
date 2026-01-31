@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/room.dart';
 import '../models/guest.dart';
+import 'add_guest_screen.dart';
 
 class GuestsScreen extends StatelessWidget {
   final Room room;
@@ -46,6 +47,22 @@ class GuestsScreen extends StatelessWidget {
                 return _buildGuestCard(context, guest);
               },
             ),
+      floatingActionButton: room.availableBeds > 0
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddGuestScreen(initialRoom: room),
+                  ),
+                );
+              },
+              label: const Text('Add Guest'),
+              icon: const Icon(Icons.add),
+              backgroundColor: Colors.blue.shade700,
+              foregroundColor: Colors.white,
+            )
+          : null,
     );
   }
 

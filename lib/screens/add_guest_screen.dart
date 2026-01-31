@@ -6,7 +6,9 @@ import '../models/floor.dart';
 import '../models/room.dart';
 
 class AddGuestScreen extends StatefulWidget {
-  const AddGuestScreen({super.key});
+  final Room? initialRoom;
+
+  const AddGuestScreen({super.key, this.initialRoom});
 
   @override
   State<AddGuestScreen> createState() => _AddGuestScreenState();
@@ -29,6 +31,33 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
   final DateTime _joinDate = DateTime.now();
 
   List<Room> _availableRooms = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialRoom != null) {
+      _prefillData();
+    }
+  }
+
+  void _prefillData() {
+    final floor = _dataService.getFloorById(widget.initialRoom!.floorId);
+    if (floor != null) {
+      _selectedFloor = floor;
+      _availableRooms = _dataService.getAvailableRoomsByFloor(floor.id);
+
+      // Find the room in available rooms that matches the initial room
+      // We need to find the matching object reference or ID match from the available list
+      try {
+        _selectedRoom = _availableRooms.firstWhere(
+          (r) => r.id == widget.initialRoom!.id,
+        );
+      } catch (e) {
+        // If the room is not available (full), it won't be in the list, so we can't select it
+        _selectedRoom = null;
+      }
+    }
+  }
 
   @override
   void dispose() {
